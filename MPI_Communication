@@ -6,33 +6,33 @@ using namespace std;
 
 int main(int argc, char** argv) {
     int rank, size;
-    char message[13] = "Hello World!";
-    MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    char message[13] = "Hello World!"; // message to be sent/received
+    MPI_Init(&argc, &argv); // initialize MPI
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank); // get the rank of the current process
+    MPI_Comm_size(MPI_COMM_WORLD, &size); // get the total number of processes
 
     if (rank == 0) {
         // Master process
         for (int i = 1; i < size; i++) {
-            MPI_Send(message, 13, MPI_CHAR, i, 0, MPI_COMM_WORLD);
+            MPI_Send(message, 13, MPI_CHAR, i, 0, MPI_COMM_WORLD); // send message to each worker
         }
     } else {
         // Worker process
-        MPI_Recv(message, 13, MPI_CHAR, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE);
-        cout << "Rank " << rank << " received message: " << message << endl;
+        MPI_Recv(message, 13, MPI_CHAR, 0, 0, MPI_COMM_WORLD, MPI_STATUS_IGNORE); // receive message from master
+        cout << "Rank " << rank << " received message: " << message << endl; // print received message
     }
 
-    MPI_Barrier(MPI_COMM_WORLD); // Ensure all processes have completed sending/receiving
+    MPI_Barrier(MPI_COMM_WORLD); // synchronize all processes
 
     if (rank == 0) {
         // Master process
-        MPI_Bcast(message, 13, MPI_CHAR, 0, MPI_COMM_WORLD);
+        MPI_Bcast(message, 13, MPI_CHAR, 0, MPI_COMM_WORLD); // broadcast message to all processes
     } else {
         // Worker process
-        MPI_Bcast(message, 13, MPI_CHAR, 0, MPI_COMM_WORLD);
-        cout << "Rank " << rank << " received broadcast message: " << message << endl;
+        MPI_Bcast(message, 13, MPI_CHAR, 0, MPI_COMM_WORLD); // receive broadcast message from master
+        cout << "Rank " << rank << " received broadcast message: " << message << endl; // print received message
     }
 
-    MPI_Finalize();
+    MPI_Finalize(); // clean up MPI resources
     return 0;
 }
