@@ -1,0 +1,68 @@
+#include <mpi.h>
+#include <iostream>
+#include <chrono>
+#include <cmath>
+
+using namespace std;
+
+int main(int argc, char** argv) {
+    int rank, size, n, num_elements_per_proc;
+    double *a, *local_a, local_sum = 0, global_sum = 0;
+
+    // Initialize MPI
+    MPI_Init(&argc, &argv);
+
+    // Get the number of processes and the rank of the current process
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+    // Only the master process (rank 0) gets the input size from the user
+    if (rank == 0) {
+        cout << "Enter the number of elements: ";
+        cin >> n;
+    }
+
+    // Broadcast the input size to all processes
+    MPI_Bcast(&n, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    // Calculate the number of elements each process will handle
+    num_elements_per_proc = ceil((double)n / size);
+
+    // Allocate memory for the input array
+    if (rank == 0) {
+        a = new double[n];
+        for (int i = 0; i < n; i++) {
+            a[i] = i + 1;
+        }
+    }
+
+    // Allocate memory for the local input array
+    local_a = new double[num_elements_per_proc];
+
+    // Scatter the input array to all processes
+    MPI_Scatter(a, num_elements_per_proc, MPI_DOUBLE, local_a, num_elements_per_proc, MPI_DOUBLE, 0, MPI_COMM_WORLD);
+
+    // Compute the sum of the local input array
+    for (int i = 0; i < num_elements_per_proc; i++) {
+        local_sum += local_a[i];
+    }
+
+    // Reduce the local sums to get the global sum
+    MPI_Reduce(&local_sum, &global_sum, 1, MPI_DOUBLE, MPI_SUM, 0, MPI_COMM_WORLD);
+
+    // Only the master process (rank 0) prints the result
+    if (rank == 0) {
+        cout << "The sum of the first " << n << " doubles is " << global_sum << endl;
+    }
+
+    // Free memory
+    if (rank == 0) {
+        delete[] a;
+    }
+    delete[] local_a;
+
+    // Finalize MPI
+    MPI_Finalize();
+
+    return 0;
+}
